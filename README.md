@@ -35,8 +35,6 @@
     <a href="https://github.com/nikolajFERI/Yummerz"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/nikolajFERI/Yummerz">View Demo</a>
-    &middot;
     <a href="https://github.com/nikolajFERI/Yummerz/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
     <a href="https://github.com/nikolajFERI/Yummerz/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
@@ -74,7 +72,7 @@
 
 
 <!-- ABOUT THE PROJECT -->
-## Project descrition
+## About The Project
 
 Projekt je zasnovan kot monorepo, kar pomeni, da sta tako frontend kot backend koda shranjena v istem Git repozitoriju. To poenostavlja upravljanje in razvoj.
 
@@ -125,10 +123,7 @@ Projekt je zasnovan kot monorepo, kar pomeni, da sta tako frontend kot backend k
 
 
 <!-- GETTING STARTED -->
-## Installation
-
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+## Getting started
 
 ### Prerequisits
    - Git
