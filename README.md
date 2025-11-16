@@ -74,38 +74,20 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-Projekt je zasnovan kot monorepo, kar pomeni, da sta tako frontend kot backend koda shranjena v istem Git repozitoriju. To poenostavlja upravljanje in razvoj.
+Projekt yummerz je aplikacija za pridobivanje prilagojenih receptov. Knjig/spletnih strani za recepte je ogromno, a veliko "preprostih"  receptov vsebuje številne sestavine, katerih doma pogosto ne najdemo. 
+Tukaj se najina aplikacija razlikuje od ostalih. Uporabinik lahko v aplikacijo vnese sestavine katere ima trenutno na voljo, svoj stil življenja, ter svoje preference glede hrane.  Glede na vnešene podatke mu bo aplikacija prikazala recepte, ki zadostujejo njegovim potrebam. 
 
-- (Korenski imenik):
-	- .gitignore: Določa, katere datoteke se ne sledijo v Git.
+## Besednjak:
+Recept - navodila za pripravo hrane, vsak recept ima ključne "tag-e"
+tag- kategoričen opis hrane, naprimer "visoko beljakovinska/vlakninska", vegetarijanska, veganska, nizko kalorična
+sestavina - sestavni deli receptov, te uporabnik specificira
+stopnja kritičnosti sestavine:
+OSREDNJI DEL - ključno
+Opcijsko
+Dodatek
 
-	- LICENSE: Licenca projekta.
 
-	- README.md: Glavna dokumentacija projekta.
-
-- /backend:
-
-	- Vsebuje strežniško (backend) aplikacijo, zgrajeno s Spring Boot.
-
-	- pom.xml: Osrednja konfiguracijska datoteka za Maven, ki definira odvisnosti in način gradnje projekta.
-
-	- mvnw, mvnw.cmd: Maven ovoj (wrapper), ki omogoča gradnjo projekta brez globalne namestitve Mavna.
-
-	- src/main/java: Izvorna koda aplikacije v jeziku Java.
-
-	- src/main/resources: Konfiguracijske datoteke, kot je application.properties.
-
-- /frontend:
-
-	- Vsebuje odjemalsko (frontend) aplikacijo, zgrajeno z ogrodjem SvelteKit.
-
-	- package.json: Definira odvisnosti in skripte za Node.js okolje (upravljano z Bun).
-
-	- svelte.config.js: Konfiguracijska datoteka za SvelteKit.
-
-	- vite.config.ts: Konfiguracijska datoteka za orodje za gradnjo Vite.
-
-	- src/routes: Struktura datotek in map v tem imeniku določa poti (routes) v aplikaciji.
+[NAREDI TREE]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
