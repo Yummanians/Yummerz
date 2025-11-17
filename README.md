@@ -72,21 +72,26 @@
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## Besednjak
 
-Projekt yummerz je aplikacija za pridobivanje prilagojenih receptov. Knjig/spletnih strani za recepte je ogromno, a veliko "preprostih"  receptov vsebuje številne sestavine, katerih doma pogosto ne najdemo. 
-Tukaj se najina aplikacija razlikuje od ostalih. Uporabinik lahko v aplikacijo vnese sestavine katere ima trenutno na voljo, svoj stil življenja, ter svoje preference glede hrane.  Glede na vnešene podatke mu bo aplikacija prikazala recepte, ki zadostujejo njegovim potrebam. 
+- **Recept** – navodila za pripravo jedi; vsak recept vsebuje ključne *tag-e*.  
+- **Tag** – kategorični opis jedi, npr. *visokobeljakovinska*, *vlakninasta*, *vegetarijanska*, *veganska*, *nizkokalorična* ipd.  
+- **Sestavina** – posamezen del recepta, ki ga uporabnik lahko vnese v aplikacijo.
 
-## Besednjak:
-- Recept - navodila za pripravo hrane, vsak recept ima ključne "tag-e"
-- tag- kategoričen opis hrane, naprimer "visoko beljakovinska/vlakninska", vegetarijanska, veganska, nizko kalorična
-- sestavina - sestavni deli receptov, te uporabnik specificira
+### Stopnje kritičnosti sestavin
+- **Osrednji del** – ključna sestavina recepta  
+- **Opcijsko** – sestavina, ki jo lahko nadomestimo ali izpustimo  
+- **Dodatek** – sestavina za izboljšanje okusa ali teksture, ni nujna
 
-- Stopnja kritičnosti sestavine:
-	- OSREDNJI DEL - ključno
-	- Opcijsko
-	- Dodatek
+---
 
+<!-- ## Vizija Projekta -->
+
+Cilj projekta **Yummerz** je omogočiti uporabnikom enostavno in hitro pripravo obrokov iz sestavin, ki jih že imajo doma. Aplikacija poenostavlja načrtovanje obrokov, zmanjšuje zapravljanje hrane in prihrani čas, ki bi ga uporabnik porabil za iskanje ustreznih receptov.  
+
+Namenjena je vsem, ki želijo jesti bolj načrtno, zdravo ali ekonomično, ne da bi se morali odpovedati raznolikosti in okusu.
+
+---
 
 ## Project layout
 
