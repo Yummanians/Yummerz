@@ -103,6 +103,144 @@ Namenjena je vsem, ki želijo jesti bolj načrtno, zdravo ali ekonomično, ne da
 
 ![alt text](https://github.com/nikolajFERI/Yummerz/blob/main/dpu.png)
 
+
+## Podroben opis primerov uporabe
+
+
+
+| Primer uporabe: Ustvarjanje recepta                                                                                                                                                                                    | ID: 1 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Ustvariti nov recept z vsemi potrebnimi podatki.                                                                                                                                                             |       |
+| **Akterji:** Uporabnik, Sistem                                                                                                                                                                                         |       |
+| **Predpogoji:** Uporabnik mora biti prijavljen.                                                                                                                                                                        |       |
+| **Stanje sistema po PU:** Recept je shranjen v bazo (stanje se spremeni).                                                                                                                                              |       |
+| **Scenarij:**<br>1. Uporabnik izbere možnost »Dodaj recept«. <br>2. Sistem prikaže obrazec. <br>3. Uporabnik vnese podatke. <br>4. Uporabnik potrdi vnos. <br>5. Sistem validira podatke. <br>6. Sistem shrani recept. |       |
+| **Alternativni tokovi:**<br>1: Uporabnik prekliče dodajanje. <br>2: Recept se shrani kot osnutek.                                                                                                                      |       |
+| **Izjeme:**<br>1: Neveljavni podatki → sistem zahteva popravek. <br>2: Napaka baze → sistem prikaže obvestilo.                                                                                                         |       |
+
+
+
+| Primer uporabe: Dodajanje razpoložljivih sestavin                                                                                           | ID: 2 |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Dodati sestavine, ki jih ima uporabnik doma.                                                                                      |       |
+| **Akterji:** Uporabnik, Sistem                                                                                                              |       |
+| **Predpogoji:** Uporabnik mora biti prijavljen.                                                                                             |       |
+| **Stanje sistema po PU:** Posodobljen seznam sestavin.                                                                                      |       |
+| **Scenarij:**<br>1. Uporabnik odpre seznam sestavin. <br>2. Doda ali vnese sestavine. <br>3. Potrdi spremembe. <br>4. Sistem shrani stanje. |       |
+| **Alternativni tokovi:**<br>1: Uporabnik odstrani sestavino.                                                                                |       |
+| **Izjeme:**<br>1: Neveljaven vnos. <br>2: Napaka pri shranjevanju.                                                                          |       |
+
+
+| Primer uporabe: Izbira prehrambenih preferenc                                                                    | ID: 3 |
+| ---------------------------------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Nastaviti prehranske potrebe (vegansko, alergije…).                                                    |       |
+| **Akterji:** Uporabnik, Sistem                                                                                   |       |
+| **Predpogoji:** Uporabnik je prijavljen.                                                                         |       |
+| **Stanje sistema po PU:** Preference so shranjene.                                                               |       |
+| **Scenarij:**<br>1. Uporabnik odpre razdelek preferenc. <br>2. Izbere možnosti. <br>3. Sistem shrani nastavitve. |       |
+| **Alternativni tokovi:**<br>1: Uporabnik spremeni napačno izbiro.                                                |       |
+| **Izjeme:**<br>1: Napaka pri shranjevanju podatkov.                                                              |       |
+|                                                                                                                  |       |
+
+
+| Primer uporabe: Dodajanje tag-ov                                     | ID: 4 |
+| -------------------------------------------------------------------- | ----- |
+| **Cilj:** Oznaka recepta s ključnimi besedami.                       |       |
+| **Akterji:** Uporabnik, Sistem                                       |       |
+| **Predpogoji:** Uporabnik ureja ali ustvarja recept.                 |       |
+| **Stanje sistema po PU:** Tag-i so shranjeni v receptu.              |       |
+| **Scenarij:**<br>1. Uporabnik vnese tag-e. <br>2. Sistem jih shrani. |       |
+| **Alternativni tokovi:**<br>1: Uporabnik odstrani tag.               |       |
+| **Izjeme:**<br>1: Tag presega dovoljeno dolžino.                     |       |
+
+
+
+| Primer uporabe: Objavljanje recepta                                                                           | ID: 5 |
+| ------------------------------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Objaviti recept za javnost.                                                                         |       |
+| **Akterji:** Uporabnik, Sistem                                                                                |       |
+| **Predpogoji:** Recept mora biti popoln.                                                                      |       |
+| **Stanje sistema po PU:** Recept postane javen.                                                               |       |
+| **Scenarij:**<br>1. Uporabnik izbere »Objavi«. <br>2. Sistem preveri celovitost. <br>3. Sistem objavi recept. |       |
+| **Alternativni tokovi:**<br>1: Recept se objavi kot nepopoln (če je dovoljeno).                               |       |
+| **Izjeme:**<br>1: Manjkajo podatki → objava zavrnjena.                                                        |       |
+
+
+
+| Primer uporabe: Urejanje javnih receptov                                                       | ID: 6 |
+| ---------------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Posodobiti podatke javnih receptov.                                                  |       |
+| **Akterji:** Vsebinski administrator, Sistem                                                   |       |
+| **Predpogoji:** Admin je prijavljen.                                                           |       |
+| **Stanje sistema po PU:** Recept je posodobljen.                                               |       |
+| **Scenarij:**<br>1. Admin izbere recept. <br>2. Uredi podatke. <br>3. Sistem shrani spremembe. |       |
+| **Alternativni tokovi:**<br>1: Admin prekliče urejanje.                                        |       |
+| **Izjeme:**<br>1: Konflikt sočasnega urejanja.                                                 |       |
+
+
+| Primer uporabe: Brisanje javnih receptov                                                                                            | ID: 7 |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Odstraniti recept iz sistema.                                                                                             |       |
+| **Akterji:** Vsebinski administrator, Sistem                                                                                        |       |
+| **Predpogoji:** Admin prijavljen; recept obstaja.                                                                                   |       |
+| **Stanje sistema po PU:** Recept izbrisan iz baze.                                                                                  |       |
+| **Scenarij:**<br>1. Admin izbere recept. <br>2. Klikne »Izbriši«. <br>3. Sistem zahteva potrditev. <br>4. Recept se trajno izbriše. |       |
+| **Alternativni tokovi:**<br>1: Preklic brisanja.                                                                                    |       |
+| **Izjeme:**<br>1: Recept ni mogoče izbrisati zaradi odvisnosti.                                                                     |       |
+
+| Primer uporabe: Pregled receptov                                                       | ID: 8 |
+| -------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Prikaz vseh javnih receptov.                                                 |       |
+| **Akterji:** Uporabnik, Sistem                                                         |       |
+| **Predpogoji:** Ni posebnih pogojev.                                                   |       |
+| **Stanje sistema po PU:** Stanje ostane enako.                                         |       |
+| **Scenarij:**<br>1. Uporabnik klikne »Pregled receptov«. <br>2. Sistem prikaže seznam. |       |
+| **Alternativni tokovi:**<br>1: Ni receptov → prikaže se prazno stanje.                 |       |
+| **Izjeme:**<br>1: Napaka povezave → prikaz se ne naloži.                               |       |
+
+
+| Primer uporabe: Filtriranje receptov                                                     | ID: 9 |
+| ---------------------------------------------------------------------------------------- | ----- |
+| **Cilj:** Prikaz receptov po izbranih kriterijih.                                        |       |
+| **Akterji:** Uporabnik, Sistem                                                           |       |
+| **Predpogoji:** Recepti morajo obstajati.                                                |       |
+| **Stanje sistema po PU:** Ni trajnih sprememb.                                           |       |
+| **Scenarij:**<br>1. Uporabnik izbere filter. <br>2. Sistem prikaže filtrirane rezultate. |       |
+| **Alternativni tokovi:**<br>1: Filter vrne 0 zadetkov.                                   |       |
+| **Izjeme:**<br>1: Napaka pri iskanju.                                                    |       |
+
+
+| Primer uporabe: Uploadanje datoteke                                                                                                                 | ID: 10 |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **Cilj:** Naložiti datoteko z receptom.                                                                                                             |        |
+| **Akterji:** Uporabnik, Sistem                                                                                                                      |        |
+| **Predpogoji:** Uporabnik mora biti prijavljen.                                                                                                     |        |
+| **Stanje sistema po PU:** Datoteka je naložena in pripravljena za branje.                                                                           |        |
+| **Scenarij:**<br>1. Uporabnik klikne »Naloži datoteko«. <br>2. Izbere datoteko. <br>3. Sistem preveri veljavnost. <br>4. Preide na branje datoteke. |        |
+| **Alternativni tokovi:**<br>1: Napačen format datoteke.                                                                                             |        |
+| **Izjeme:**<br>1: Napačna struktura datoteke. <br>2: Prekinjen prenos.                                                                              |        |
+
+
+| Primer uporabe: Branje recepta iz datoteke                                                                                                     | ID: 11 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **Cilj:** Pretvoriti vsebino datoteke v podatkovni model recepta.                                                                              |        |
+| **Akterji:** Sistem                                                                                                                            |        |
+| **Predpogoji:** Datoteka je bila uspešno naložena.                                                                                             |        |
+| **Stanje sistema po PU:** Podatki recepta pripravljeni za ustvarjanje.                                                                         |        |
+| **Scenarij:**<br>1. Sistem odpre datoteko. <br>2. Prebere podatke. <br>3. Pretvori jih v strukturo. <br>4. Nadaljuje na »Ustvarjanje recepta«. |        |
+| **Izjeme:**<br>1: Datoteka se ne da odpreti. <br>2: Neveljavna vsebina.                                                                        |        |
+
+
+| Primer uporabe: Pretvorba recepta v datoteko                                                                                      | ID: 12 |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **Cilj:** Izvoziti recept v datoteko.                                                                                             |        |
+| **Akterji:** Uporabnik, Sistem                                                                                                    |        |
+| **Predpogoji:** Recept mora obstajati.                                                                                            |        |
+| **Stanje sistema po PU:** Ustvarjena datoteka; baza ostane nespremenjena.                                                         |        |
+| **Scenarij:**<br>1. Uporabnik izbere »Izvozi«. <br>2. Sistem ponudi format. <br>3. Ustvari datoteko. <br>4. Uporabnik jo prenese. |        |
+| **Izjeme:**<br>1: Napaka pri generiranju. <br>2: Manjkajo podatki v receptu.                                                      |        |
+
+
 ## Project layout
 
 ```
