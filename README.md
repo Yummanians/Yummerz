@@ -108,7 +108,7 @@ Namenjena je vsem, ki želijo jesti bolj načrtno, zdravo ali ekonomično, ne da
 
 ## CLASS DIAGRAM
 
-![alt text](https://github.com/nikolajFERI/Yummerz/blob/main/RisDiagram.png)
+![alt text](https://github.com/nikolajFERI/Yummerz/blob/main/ClassDiagram.png)
 
 
 ### Opis razredov
