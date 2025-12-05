@@ -2,7 +2,12 @@ package com.yummerz.yummerz;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,5 +51,43 @@ public class RecipeService {
         } else {
             return false;
         }
+    }
+   
+    public void importRecipeFromMarkdown(MultipartFile file) throws IOException {
+        String name = "Untitled Recipe";
+        StringBuilder ingredients = new StringBuilder();
+        StringBuilder instructions = new StringBuilder();
+        
+        String currentSection = ""; 
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                
+                if (line.startsWith("# ")) {
+                    name = line.substring(2).trim();
+                } else if (line.startsWith("## Ingredients")) {
+                    currentSection = "INGREDIENTS";
+                } else if (line.startsWith("## Instructions") || line.startsWith("## Preparation")) {
+                    currentSection = "INSTRUCTIONS";
+                } else if (!line.isEmpty()) {
+                    if ("INGREDIENTS".equals(currentSection)) {
+                        ingredients.append(line).append("\n");
+                    } else if ("INSTRUCTIONS".equals(currentSection)) {
+                        instructions.append(line).append("\n");
+                    }
+                }
+            }
+        }
+
+        Recipe recipe = new Recipe();
+        recipe.setName(name);
+        recipe.setIngredients(ingredients.toString().trim());
+        recipe.setInstructions(instructions.toString().trim());
+        
+        recipeRepository.save(recipe);
     }
 }

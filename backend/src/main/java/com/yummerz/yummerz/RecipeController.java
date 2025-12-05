@@ -1,8 +1,10 @@
 package com.yummerz.yummerz;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +47,17 @@ public class RecipeController {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<String> uploadRecipe(@RequestParam("file") MultipartFile file) {
+        try {
+            recipeService.importRecipeFromMarkdown(file);
+            return ResponseEntity.ok("Recipe imported successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing file: " + e.getMessage());
         }
     }
 }

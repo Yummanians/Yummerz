@@ -68,3 +68,12 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# NixOS
+.direnv/
+.envrc
+flake.nix
+flake.lock
+.db_data/
+*.log
+backend/.m2_dependencies/

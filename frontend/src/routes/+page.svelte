@@ -1,108 +1,56 @@
-<script>
+<script lang="ts">
     import { onMount } from 'svelte';
+    import { fetchRecipes, createRecipe, updateRecipe, deleteRecipe, uploadMarkdown, type Recipe } from '$lib/services/recipe_api';
+    import '$lib/styles/global.css'; 
 
-    // --- Stanje aplikacije (State) ---
-    let recipes = [];
+    let recipes: Recipe[] = [];
     let name = '';
     let ingredients = '';
     let instructions = '';
-    let editingRecipeId = null;
-
+    let editingRecipeId: number | null = null;
     let searchTerm = '';
+    let fileInput: HTMLInputElement;
 
-    const API_URL = 'http://localhost:8080/api/recipes';
-
-    async function fetchRecipes() {
+    async function loadRecipes() {
         try {
-            const url = searchTerm ? `${API_URL}?search=${encodeURIComponent(searchTerm)}` : API_URL;
-            const response = await fetch(url);
-            if (response.ok) {
-                recipes = await response.json();
-            } else {
-                console.error('Napaka pri pridobivanju receptov.');
-            }
-        } catch (error) {
-            console.error('Napaka pri povezavi s strežnikom:', error);
+            recipes = await fetchRecipes(searchTerm);
+        } catch (e) {
+            console.error(e);
         }
     }
 
-    onMount(fetchRecipes);
+    onMount(loadRecipes);
 
-    $: if (searchTerm !== undefined) {
-        fetchRecipes();
-    }
+    $: if (searchTerm !== undefined) loadRecipes();
 
-    async function createRecipe() {
-        const newRecipe = { name, ingredients, instructions };
+    async function handleSubmit() {
+        const recipeData = { name, ingredients, instructions };
         try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newRecipe)
-            });
-
-            if (response.ok) {
-                await fetchRecipes();
-                resetForm();
+            if (editingRecipeId) {
+                await updateRecipe(editingRecipeId, recipeData);
             } else {
-                console.error('Napaka pri dodajanju recepta.');
+                await createRecipe(recipeData);
             }
-        } catch (error) {
-            console.error('Napaka pri povezavi s strežnikom:', error);
+            resetForm();
+            loadRecipes();
+        } catch (e) {
+            console.error(e);
+            alert('Napaka pri shranjevanju.');
         }
     }
 
-    async function updateRecipe() {
-        if (!editingRecipeId) return;
-
-        const updatedRecipe = { name, ingredients, instructions };
+    async function handleDelete(id: number | undefined) {
+        if (!id || !confirm('Ali ste prepričani?')) return;
         try {
-            const response = await fetch(`${API_URL}/${editingRecipeId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedRecipe)
-            });
-
-            if (response.ok) {
-                await fetchRecipes();
-                resetForm();
-            } else {
-                console.error('Napaka pri posodabljanju recepta.');
-            }
-        } catch (error) {
-            console.error('Napaka pri povezavi s strežnikom:', error);
+            await deleteRecipe(id);
+            loadRecipes();
+        } catch (e) {
+            console.error(e);
         }
     }
 
-    async function deleteRecipe(id) {
-        if (!confirm('Ali ste prepričani, da želite izbrisati ta recept?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/${id}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) {
-                await fetchRecipes();
-            } else {
-                console.error('Napaka pri brisanju recepta.');
-            }
-        } catch (error) {
-            console.error('Napaka pri povezavi s strežnikom:', error);
-        }
-    }
-
-    function handleSubmit() {
-        if (editingRecipeId) {
-            updateRecipe();
-        } else {
-            createRecipe();
-        }
-    }
-
-    function handleEdit(recipe) {
-        editingRecipeId = recipe.id;
+    function handleEdit(recipe: Recipe) {
+        editingRecipeId = recipe.id!;
         name = recipe.name;
         ingredients = recipe.ingredients;
         instructions = recipe.instructions;
@@ -115,7 +63,6 @@
         ingredients = '';
         instructions = '';
     }
-
 </script>
 
 <main>
