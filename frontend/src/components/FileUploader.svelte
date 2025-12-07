@@ -6,7 +6,7 @@
 	//look at all these beautiful options
 	// Buttons text, set any to "" to remove that button
 	export let buttonText = "Upload";
-	export let doneButtonText = "Done";
+	export let doneButtonText = "Konec";
 	export let doneText = "Successfully uploaded"
 	export let descriptionText = "Povleci sem ali klikni";
     export let doneBoolean = false;
