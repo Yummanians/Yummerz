@@ -325,6 +325,20 @@ Razred **Sestavina** predstavlja posamezno sestavino recepta in uporabnikovih pr
 ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+### Uploadanje novih receptov
+Nove recepte lahko uporabnik naloži s pomočjo upload gumba na strani za dodajanje projektov, ali pa jo povleče v označen pravokotnik kamor jo lahko postavi. Naloži lahko readme datoteko v formatu
+
+# Ime recepta
+
+## Sestavine
+- 100 gramov nečesa
+- 2 kg nečesa drugega
+
+## Navodila
+1. Prvi korak
+2. Drugi korak
+3. Tretji korak
+
 
 
 ### Built With
