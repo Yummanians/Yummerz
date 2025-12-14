@@ -28,8 +28,8 @@ Ustvarjeni testi pokrivajo naslednja področja:
 
 ## 2. Člani skupine in odgovornosti
 
-*   **[Nikolaj Logar]:** Priprava okolja za testiranje, pisanje testov za `getAllRecipes` in `deleteRecipe`.
-*   **[Jure Antolic]:** Pisanje kompleksnejšega testa za `importRecipeFromMarkdown` in negativnega testa za `updateRecipe`. Priprava poročila.
+*   **Nikolaj Logar:** Priprava okolja za testiranje, pisanje testov za `getAllRecipes` in `deleteRecipe`.
+*   **Jure Antolic:** Pisanje kompleksnejšega testa za `importRecipeFromMarkdown` in negativnega testa za `updateRecipe`. Priprava poročila.
 
 ## 3. Analiza uspešnosti testov
 
