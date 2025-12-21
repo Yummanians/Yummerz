@@ -1,12 +1,3 @@
-Pri najinem projektu Yummerz sva najprej ustvarila SCRUM board na najinem github projektu. Nato je bilo potrebno pripraviti naloge, ki bi jih bilo treb opraviti.
-Skupaj sva si projekt razdelila na manjše sestavne dele, ter se s pomočjo scrum pokerja dogovorila koliko bi od naju vsaka naloga zahtevala.
-Kot enoto sva uporabila t-shirt-sizes:
-
-
-Po uspešnem dogovoru sva pričela z dodajanjem nalog na SCRUM board, kjer sva jim najprej določila prioritete.
-Nato sva začela z implementacijo, naloge sva si razdelila tako da sva oba imela približno ekvivalenten zalogaj pri nalogah, kar sva tudi uspešno implementirala.
-
-
 
 # Scrum poročilo – Projekt Yummerz
 
