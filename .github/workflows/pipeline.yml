@@ -1,0 +1,84 @@
+name: Yummerz CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend 
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25' 
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Grant execute permission for mvnw
+      run: chmod +x mvnw
+
+    - name: Build with Maven
+      run: ./mvnw clean package -DskipTests
+
+  build-frontend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install
+
+    - name: Build Frontend
+      run: bun run build
+
+  test-backend:
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Grant execute permission for mvnw
+      run: chmod +x mvnw
+
+    - name: Start and Setup MySQL/MariaDB
+      run: |
+        sudo systemctl start mysql.service
+        sleep 10
+        mysql -e "CREATE DATABASE yummerz_db;" -uroot -proot
+
+    - name: Run Backend Tests
+      run: >
+        ./mvnw test
+        -Dspring.datasource.url=jdbc:mysql://localhost:3306/yummerz_db
+        -Dspring.datasource.username=root
+        -Dspring.datasource.password=root
