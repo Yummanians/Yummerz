@@ -77,3 +77,5 @@ flake.lock
 .db_data/
 *.log
 backend/.m2_dependencies/
+
+backend/.db_data/
