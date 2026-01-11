@@ -2,41 +2,82 @@
 	import { onMount } from 'svelte';
 	import {
 		fetchRecipes,
-		fetchIngredients,
+		fetchIngredients, 
 		createRecipe,
 		updateRecipe,
 		deleteRecipe,
 		uploadMarkdown,
 		type Recipe,
-
 	} from '$lib/services/recipe_api';
 	import '$lib/styles/global.css';
 	import FileUpload from '../../components/FileUploader.svelte';
 
+	interface Ingredient {
+		id: number;
+		name: string;
+		calories: number; 
+	}
+
 	let recipes: Recipe[] = [];
+	let globalIngredients: Ingredient[] = []; 
+	
 	let name = '';
 	let ingredients = '';
 	let instructions = '';
 	let editingRecipeId: number | null = null;
 	let searchTerm = '';
 	let fileInput: any;
+	
 	let kolicina = 1;
+	let dailyTargetKcal = 2000; 
 
-	// Logika za izbiro sestavin
 	let showIngredientModal = false;
 	let ingredientSearch = '';
-	// Seznam vseh sestavin - uncomenti ko bo backend
-	let allIngredients = ['Moka', 'Sladkor', 'Jajca', 'Mleko', 'Maslo', 'Sol', 'Olje', 'Kvas', 'Poper'];
-	async function loadIngredients() {
+	
+	$: filteredIngredientsList = globalIngredients.filter((i) =>
+		i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+	);
+
+	async function loadData() {
 		try {
-			allIngredients = await fetchIngredients(searchTerm);
+			recipes = await fetchRecipes(searchTerm);
+			
+			const result = await fetchIngredients(''); 
+			globalIngredients = Array.isArray(result) ? result : [];
 		} catch (e) {
-			console.error(e);
+			console.error("Napaka pri nalaganju podatkov:", e);
 		}
 	}
-	$: filteredIngredients = allIngredients.filter((i) =>
-		i.toLowerCase().includes(ingredientSearch.toLowerCase())
-	);
+
+	onMount(loadData);
+
+	$: if (searchTerm !== undefined) loadData();
+
+	function calculateNutrition(recipeIngredientsText: string) {
+		let totalKcal = 0;
+		if (!recipeIngredientsText) return { total: 0, percent: 0 };
+
+		const lines = recipeIngredientsText.split('\n');
+
+		for (const line of lines) {
+			const match = line.match(/(\d+)(?:g)?\s+(.*)/i) || [null, '100', line.trim()];
+			
+			const quantity = parseFloat(match[1] || '100'); // Če ni številke, privzemi 100g
+			const ingredientName = match[2]?.trim().toLowerCase();
+
+			if (ingredientName) {
+				const found = globalIngredients.find(i => i.name.toLowerCase() === ingredientName);
+				if (found) {
+					totalKcal += (quantity / 100) * found.calories;
+				}
+			}
+		}
+		
+		return {
+			total: Math.round(totalKcal),
+			percent: Math.round((totalKcal / dailyTargetKcal) * 100)
+		};
+	}
 
 	function scaleIngredients(text: string, multiplier: number): string {
 		if (!multiplier || multiplier === 1) return text;
@@ -44,18 +85,6 @@
 			(parseFloat(match) * multiplier).toString()
 		);
 	}
-
-	async function loadRecipes() {
-		try {
-			recipes = await fetchRecipes(searchTerm);
-		} catch (e) {
-			console.error(e);
-		}
-	}
-
-	onMount(loadRecipes);
-
-	$: if (searchTerm !== undefined) loadRecipes();
 
 	async function handleSubmit() {
 		const recipeData = { name, ingredients, instructions };
@@ -66,15 +95,16 @@
 				await createRecipe(recipeData);
 			}
 			resetForm();
-			loadRecipes();
+			loadData();
 		} catch (e) {
 			console.error(e);
 			alert('Napaka pri shranjevanju.');
 		}
 	}
 
-	function selectIngredient(item: string) {
-		ingredients = ingredients ? `${ingredients}\n${item}` : item;
+	function selectIngredient(itemName: string) {
+		const line = `100g ${itemName}`;
+		ingredients = ingredients ? `${ingredients}\n${line}` : line;
 		showIngredientModal = false;
 		ingredientSearch = '';
 	}
@@ -89,14 +119,14 @@
 				alert('Napaka pri nalaganju');
 			}
 		}
-		loadRecipes();
+		loadData();
 	}
 
 	async function handleDelete(id: number | undefined) {
 		if (!id || !confirm('Ali ste prepričani?')) return;
 		try {
 			await deleteRecipe(id);
-			loadRecipes();
+			loadData();
 		} catch (e) {
 			console.error(e);
 		}
@@ -121,6 +151,14 @@
 <main>
 	<h1>Knjiga Receptov Yummerz</h1>
 
+	<!-- Settings Bar za stranko -->
+	<div class="settings-bar">
+		<label>
+			🎯 Ciljni dnevni vnos (kcal):
+			<input type="number" bind:value={dailyTargetKcal} min="1000" step="100" style="width: 100px; display: inline-block; padding: 5px;">
+		</label>
+	</div>
+
 	<div class="form-container">
 		<h2>{editingRecipeId ? 'Uredi Recept' : 'Dodaj Nov Recept'}</h2>
 
@@ -130,12 +168,12 @@
 				<input id="name" type="text" bind:value={name} required />
 			</div>
 			<div class="form-group">
-				<label for="ingredients">Sestavine:</label>
-				<textarea id="ingredients" bind:value={ingredients} rows="4"></textarea>
+				<label for="ingredients">Sestavine (format: "200g Moka"):</label>
+				<textarea id="ingredients" bind:value={ingredients} rows="4" placeholder="200g Moka&#10;150g Sladkor"></textarea>
 				<button type="button" class="secondary-outline" on:click={() => (showIngredientModal = true)}>
 					+ Izberi sestavino s seznama
 				</button>
-				<a href="/ingredients" class="button-link">Dodaj novo sestavino</a>
+				<a href="/ingredients" class="button-link">Dodaj novo sestavino v shrambo</a>
 			</div>
 			<div class="form-group">
 				<label for="instructions">Navodila:</label>
@@ -153,7 +191,6 @@
 			</div>
 		</form>
 		<br />
-
 		<FileUpload bind:this={fileInput} on:change={handleUpload}></FileUpload>
 	</div>
 
@@ -169,25 +206,35 @@
 				bind:value={searchTerm}
 				placeholder="Išči po imenu, sestavinah..."
 			/>
-			<br />
-			<h3>Količina obrokov:</h3>
-			<input type="number" min="1" step="1" bind:value={kolicina} />
+			<div style="margin-top: 10px;">
+				<label>Skaliraj sestavine (x): <input type="number" min="0.5" step="0.5" bind:value={kolicina} style="width: 60px;" /></label>
+			</div>
 		</div>
 
 		{#if recipes.length === 0}
-			<p>
-				{searchTerm
-					? 'Noben recept ne ustreza iskanju.'
-					: 'Trenutno ni nobenih receptov. Dodajte prvega!'}
-			</p>
+			<p>Trenutno ni nobenih receptov.</p>
 		{:else}
 			{#each recipes as recipe (recipe.id)}
+				{@const nutrition = calculateNutrition(recipe.ingredients)}
 				<article class="recipe-card">
-					<h3>{recipe.name}</h3>
+					<div class="card-header-flex">
+						<h3>{recipe.name}</h3>
+						
+						<!-- NUTRITION BADGE (NOVO) -->
+						{#if nutrition.total > 0}
+							<div class="nutrition-badge" title="Delež dnevnega vnosa">
+								<span class="calories">🔥 {nutrition.total} kcal</span>
+								<span class="percent">({nutrition.percent}% dnevnega vnosa)</span>
+							</div>
+						{/if}
+					</div>
+
 					<h4>Sestavine</h4>
 					<p>{scaleIngredients(recipe.ingredients, kolicina)}</p>
+					
 					<h4>Navodila</h4>
 					<p>{recipe.instructions}</p>
+					
 					<div class="recipe-actions">
 						<button on:click={() => handleEdit(recipe)}>Uredi</button>
 						<button class="danger" on:click={() => handleDelete(recipe.id)}>Izbriši</button>
@@ -208,15 +255,15 @@
 					autofocus
 				/>
 				<ul class="ingredient-select-list">
-					{#each filteredIngredients as item}
+					{#each filteredIngredientsList as item}
 						<li>
-							<button type="button" on:click={() => selectIngredient(item)}>
-								{item}
+							<button type="button" on:click={() => selectIngredient(item.name)}>
+								{item.name} ({item.calories} kcal/100g)
 							</button>
 						</li>
 					{/each}
-					{#if filteredIngredients.length === 0}
-						<li>Ni zadetkov...</li>
+					{#if filteredIngredientsList.length === 0}
+						<li>Ni zadetkov. <a href="/ingredients">Dodaj novo?</a></li>
 					{/if}
 				</ul>
 				<button type="button" class="close-btn" on:click={() => (showIngredientModal = false)}>
@@ -229,9 +276,7 @@
 
 <style>
 	:root {
-		font-family:
-			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-			'Helvetica Neue', sans-serif;
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 		--primary-color: #4caf50;
 		--danger-color: #f44336;
 		--card-bg: #f9f9f9;
@@ -243,16 +288,18 @@
 		margin: 2rem auto;
 		padding: 1rem;
 	}
-
-	h1,
-	h2 {
+	
+	.settings-bar {
+		background: #e8f5e9;
+		padding: 10px;
+		border-radius: 8px;
+		margin-bottom: 20px;
 		text-align: center;
-		color: #333;
+		border: 1px solid #c8e6c9;
 	}
 
-	hr {
-		margin: 2rem 0;
-	}
+	h1, h2 { text-align: center; color: #333; }
+	hr { margin: 2rem 0; }
 
 	.form-container {
 		background: var(--card-bg);
@@ -261,42 +308,24 @@
 		border: 1px solid var(--border-color);
 	}
 
-	.form-group {
-		margin-bottom: 1rem;
-	}
-
-	.form-group label {
-		display: block;
-		margin-bottom: 0.5rem;
-		font-weight: bold;
-	}
+	.form-group { margin-bottom: 1rem; }
+	.form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
 	
-	input,
-	textarea {
+	input, textarea {
 		width: 100%;
 		padding: 0.75rem;
 		border: 1px solid var(--border-color);
 		border-radius: 4px;
-		font-size: 1rem;
 		box-sizing: border-box;
 	}
-	.button-link {
-    text-decoration: none;
-    
-    display: block;         
-    width: fit-content;      
-    margin: 0.5rem auto;      
-    
-    background-color: var(--primary-color);
-    color: white;
-    border-radius: 4px;
-    font-weight: bold;
-    transition: background-color 0.2s;
-	}
 
-	.button-link:hover {
-		background-color: #45a049;
-		color: white; 
+	.button-link {
+		text-decoration: none;
+		display: inline-block;
+		margin-top: 0.5rem;
+		color: var(--primary-color);
+		font-weight: bold;
+		font-size: 0.9rem;
 	}
 
 	.secondary-outline {
@@ -307,51 +336,21 @@
 		width: 100%;
 	}
 
-	.button-group {
-		display: flex;
-		gap: 1rem;
-		margin-top: 1.5rem;
-	}
+	.button-group { display: flex; gap: 1rem; margin-top: 1.5rem; }
 
 	button {
 		padding: 0.75rem 1.5rem;
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
 		font-weight: bold;
-		transition: background-color 0.2s;
 	}
+	button.primary { background-color: var(--primary-color); color: white; }
+	button.danger { background-color: var(--danger-color); color: white; }
 
-	button.primary {
-		background-color: var(--primary-color);
-		color: white;
-	}
-	button.primary:hover {
-		background-color: #45a049;
-	}
-
-	button.danger {
-		background-color: var(--danger-color);
-		color: white;
-	}
-	button.danger:hover {
-		background-color: #da190b;
-	}
-
-	.recipes-list {
-		margin-top: 2rem;
-	}
-
-	.search-container {
-		margin-bottom: 1.5rem;
-	}
-	.search-container input {
-		max-width: 400px;
-		display: block;
-		margin: 0 auto;
-		text-align: center;
-	}
+	.recipes-list { margin-top: 2rem; }
+	.search-container { margin-bottom: 1.5rem; text-align: center; }
+	.search-container input[type="text"] { max-width: 400px; display: inline-block; }
 
 	.recipe-card {
 		background: var(--card-bg);
@@ -359,69 +358,52 @@
 		border-radius: 8px;
 		padding: 1.5rem;
 		margin-bottom: 1rem;
+		position: relative;
 	}
-
-	.recipe-card h3 {
-		margin-top: 0;
-	}
-
-	.recipe-card p {
-		white-space: pre-wrap;
-	}
-
-	.recipe-actions {
-		margin-top: 1rem;
+	
+	.card-header-flex {
 		display: flex;
-		gap: 1rem;
+		justify-content: space-between;
+		align-items: flex-start;
+		flex-wrap: wrap;
+		gap: 10px;
 	}
+	
+	.card-header-flex h3 { margin: 0; }
 
-	/* Modalni slogi */
+	/* NUTRITION BADGE STYLES */
+	.nutrition-badge {
+		background: #fff3e0;
+		border: 1px solid #ffe0b2;
+		color: #e65100;
+		padding: 5px 10px;
+		border-radius: 20px;
+		font-size: 0.9rem;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+	.nutrition-badge .calories { font-weight: bold; }
+	.nutrition-badge .percent { font-size: 0.75rem; opacity: 0.9; }
+
+	.recipe-card p { white-space: pre-wrap; }
+	.recipe-actions { margin-top: 1rem; display: flex; gap: 1rem; }
+
+	/* Modal */
 	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
+		position: fixed; top: 0; left: 0; width: 100%; height: 100%;
 		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		z-index: 1000;
+		display: flex; justify-content: center; align-items: center; z-index: 1000;
 	}
-
 	.modal-content {
-		background: white;
-		padding: 2rem;
-		border-radius: 8px;
-		width: 90%;
-		max-width: 400px;
-		max-height: 80vh;
-		overflow-y: auto;
+		background: white; padding: 2rem; border-radius: 8px;
+		width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;
 	}
-
-	.ingredient-select-list {
-		list-style: none;
-		padding: 0;
-		margin: 1rem 0;
-	}
-
+	.ingredient-select-list { list-style: none; padding: 0; margin: 1rem 0; }
 	.ingredient-select-list li button {
-		width: 100%;
-		text-align: left;
-		background: none;
-		color: #333;
-		border-bottom: 1px solid #eee;
-		border-radius: 0;
-		padding: 0.5rem;
+		width: 100%; text-align: left; background: none;
+		border-bottom: 1px solid #eee; padding: 0.5rem;
 	}
-
-	.ingredient-select-list li button:hover {
-		background: #f0f0f0;
-	}
-
-	.close-btn {
-		width: 100%;
-		background: #ccc;
-		margin-top: 1rem;
-	}
+	.ingredient-select-list li button:hover { background: #f0f0f0; }
+	.close-btn { width: 100%; background: #ccc; margin-top: 1rem; }
 </style>
