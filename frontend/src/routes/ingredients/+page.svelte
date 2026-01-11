@@ -1,5 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import {
+		fetchIngredients,
+		createIngredient,
+		updateIngredient,
+		deleteIngredient,
+		type Recipe,
+
+	} from '$lib/services/recipe_api';
 	import '$lib/styles/global.css';
 
 	interface Ingredient {
@@ -25,14 +33,10 @@
 	let carbs: number = 0;
 	let fat: number = 0;
 
-	async function loadIngredients() {
-		
-		console.log("Fetching ingredients for:", searchTerm);
-	}
 
-	onMount(loadIngredients);
+	onMount(fetchIngredients);
 
-	$: if (searchTerm !== undefined) loadIngredients();
+	$: if (searchTerm !== undefined) fetchIngredients();
 
 	async function handleSubmit() {
 		const allergenArray = allergensInput
@@ -53,13 +57,13 @@
 		try {
 			if (editingId) {
 				console.log('Updating ingredient:', editingId, ingredientData);
-				// await updateIngredient(editingId, ingredientData);
+				await updateIngredient(editingId, ingredientData);
 			} else {
 				console.log('Creating ingredient:', ingredientData);
-				// await createIngredient(ingredientData);
+				await createIngredient(ingredientData);
 			}
 			resetForm();
-			loadIngredients();
+			fetchIngredients();
 		} catch (e) {
 			alert('Napaka pri shranjevanju sestavine.');
 		}
@@ -80,8 +84,8 @@
 	async function handleDelete(id: number) {
 		if (!confirm('Ali res želite izbrisati to sestavino?')) return;
 		console.log('Deleting:', id);
-		// await deleteIngredient(id);
-		loadIngredients();
+		await deleteIngredient(id);
+		fetchIngredients();
 	}
 
 	function resetForm() {

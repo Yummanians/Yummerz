@@ -2,11 +2,13 @@
 	import { onMount } from 'svelte';
 	import {
 		fetchRecipes,
+		fetchIngredients,
 		createRecipe,
 		updateRecipe,
 		deleteRecipe,
 		uploadMarkdown,
-		type Recipe
+		type Recipe,
+
 	} from '$lib/services/recipe_api';
 	import '$lib/styles/global.css';
 	import FileUpload from '../../components/FileUploader.svelte';
@@ -17,13 +19,30 @@
 	let instructions = '';
 	let editingRecipeId: number | null = null;
 	let searchTerm = '';
-	let fileInput;
+	let fileInput: any;
 	let kolicina = 1;
+
+	// Logika za izbiro sestavin
+	let showIngredientModal = false;
+	let ingredientSearch = '';
+	// Seznam vseh sestavin - uncomenti ko bo backend
+	let allIngredients = ['Moka', 'Sladkor', 'Jajca', 'Mleko', 'Maslo', 'Sol', 'Olje', 'Kvas', 'Poper'];
+	async function loadIngredients() {
+		try {
+			allIngredients = await fetchIngredients(searchTerm);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+	$: filteredIngredients = allIngredients.filter((i) =>
+		i.toLowerCase().includes(ingredientSearch.toLowerCase())
+	);
 
 	function scaleIngredients(text: string, multiplier: number): string {
 		if (!multiplier || multiplier === 1) return text;
-
-		return text.replace(/\b\d+(\.\d+)?\b/g, (match) => (parseFloat(match) * multiplier).toString());
+		return text.replace(/\b\d+(\.\d+)?\b/g, (match) =>
+			(parseFloat(match) * multiplier).toString()
+		);
 	}
 
 	async function loadRecipes() {
@@ -52,6 +71,12 @@
 			console.error(e);
 			alert('Napaka pri shranjevanju.');
 		}
+	}
+
+	function selectIngredient(item: string) {
+		ingredients = ingredients ? `${ingredients}\n${item}` : item;
+		showIngredientModal = false;
+		ingredientSearch = '';
 	}
 
 	async function handleUpload() {
@@ -106,7 +131,11 @@
 			</div>
 			<div class="form-group">
 				<label for="ingredients">Sestavine:</label>
-				<textarea id="ingredients" bind:value={ingredients} rows="4" required></textarea>
+				<textarea id="ingredients" bind:value={ingredients} rows="4"></textarea>
+				<button type="button" class="secondary-outline" on:click={() => (showIngredientModal = true)}>
+					+ Izberi sestavino s seznama
+				</button>
+				<a href="/ingredients" class="button-link">Dodaj novo sestavino</a>
 			</div>
 			<div class="form-group">
 				<label for="instructions">Navodila:</label>
@@ -114,9 +143,9 @@
 			</div>
 
 			<div class="button-group">
-				<button type="submit" class="primary"
-					>{editingRecipeId ? 'Shrani Spremembe' : 'Dodaj Recept'}</button
-				>
+				<button type="submit" class="primary">
+					{editingRecipeId ? 'Shrani Spremembe' : 'Dodaj Recept'}
+				</button>
 
 				{#if editingRecipeId}
 					<button type="button" on:click={resetForm}>Prekliči</button>
@@ -145,7 +174,6 @@
 			<input type="number" min="1" step="1" bind:value={kolicina} />
 		</div>
 
-		<div class="search-container"></div>
 		{#if recipes.length === 0}
 			<p>
 				{searchTerm
@@ -168,6 +196,35 @@
 			{/each}
 		{/if}
 	</div>
+
+	{#if showIngredientModal}
+		<div class="modal-overlay" on:click|self={() => (showIngredientModal = false)}>
+			<div class="modal-content">
+				<h3>Izberi sestavino</h3>
+				<input
+					type="text"
+					placeholder="Išči sestavine..."
+					bind:value={ingredientSearch}
+					autofocus
+				/>
+				<ul class="ingredient-select-list">
+					{#each filteredIngredients as item}
+						<li>
+							<button type="button" on:click={() => selectIngredient(item)}>
+								{item}
+							</button>
+						</li>
+					{/each}
+					{#if filteredIngredients.length === 0}
+						<li>Ni zadetkov...</li>
+					{/if}
+				</ul>
+				<button type="button" class="close-btn" on:click={() => (showIngredientModal = false)}>
+					Zapri
+				</button>
+			</div>
+		</div>
+	{/if}
 </main>
 
 <style>
@@ -213,7 +270,7 @@
 		margin-bottom: 0.5rem;
 		font-weight: bold;
 	}
-
+	
 	input,
 	textarea {
 		width: 100%;
@@ -222,6 +279,32 @@
 		border-radius: 4px;
 		font-size: 1rem;
 		box-sizing: border-box;
+	}
+	.button-link {
+    text-decoration: none;
+    
+    display: block;         
+    width: fit-content;      
+    margin: 0.5rem auto;      
+    
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+	}
+
+	.button-link:hover {
+		background-color: #45a049;
+		color: white; 
+	}
+
+	.secondary-outline {
+		background: transparent;
+		border: 1px solid var(--primary-color);
+		color: var(--primary-color);
+		margin-top: 0.5rem;
+		width: 100%;
 	}
 
 	.button-group {
@@ -260,7 +343,6 @@
 		margin-top: 2rem;
 	}
 
-	/* NOVO: Stil za iskalno polje */
 	.search-container {
 		margin-bottom: 1.5rem;
 	}
@@ -291,5 +373,55 @@
 		margin-top: 1rem;
 		display: flex;
 		gap: 1rem;
+	}
+
+	/* Modalni slogi */
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		z-index: 1000;
+	}
+
+	.modal-content {
+		background: white;
+		padding: 2rem;
+		border-radius: 8px;
+		width: 90%;
+		max-width: 400px;
+		max-height: 80vh;
+		overflow-y: auto;
+	}
+
+	.ingredient-select-list {
+		list-style: none;
+		padding: 0;
+		margin: 1rem 0;
+	}
+
+	.ingredient-select-list li button {
+		width: 100%;
+		text-align: left;
+		background: none;
+		color: #333;
+		border-bottom: 1px solid #eee;
+		border-radius: 0;
+		padding: 0.5rem;
+	}
+
+	.ingredient-select-list li button:hover {
+		background: #f0f0f0;
+	}
+
+	.close-btn {
+		width: 100%;
+		background: #ccc;
+		margin-top: 1rem;
 	}
 </style>
