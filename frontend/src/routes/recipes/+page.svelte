@@ -1,259 +1,329 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import {
-		fetchRecipes,
-		fetchIngredients, 
-		createRecipe,
-		updateRecipe,
-		deleteRecipe,
-		uploadMarkdown,
-		type Recipe,
-	} from '$lib/services/recipe_api';
-	import '$lib/styles/global.css';
-	import FileUpload from '../../components/FileUploader.svelte';
+    import { onMount } from 'svelte';
+    import {
+        fetchRecipes,
+        fetchIngredients, 
+        createRecipe,
+        updateRecipe,
+        deleteRecipe,
+        uploadMarkdown,
+        type Recipe,
+    } from '$lib/services/recipe_api';
+    import '$lib/styles/global.css';
+    import FileUpload from '../../components/FileUploader.svelte';
 
-	interface Ingredient {
-		id: number;
-		name: string;
-		calories: number; 
-	}
+    interface Ingredient {
+        id: number;
+        name: string;
+        calories: number; 
+    }
 
-	let recipes: Recipe[] = [];
-	let globalIngredients: Ingredient[] = []; 
-	
-	let name = '';
-	let ingredients = '';
-	let instructions = '';
-	let editingRecipeId: number | null = null;
-	let searchTerm = '';
-	let fileInput: any;
-	
-	let kolicina = 1;
-	let dailyTargetKcal = 2000; 
+    let recipes: Recipe[] = [];
+    let globalIngredients: Ingredient[] = []; 
+    
+    // Form State
+    let name = '';
+    let ingredients = '';
+    let instructions = '';
+    
+    // NEW: Form State for new tasks
+    let rating = 0;
+    let notes = '';
+    let imageBase64 = '';
+    
+    let editingRecipeId: number | null = null;
+    let searchTerm = '';
+    let fileInput: any;
+    let imageInput: HTMLInputElement; // Reference for the image file input
+    
+    let kolicina = 1;
+    let dailyTargetKcal = 2000; 
 
-	let showIngredientModal = false;
-	let ingredientSearch = '';
-	
-	$: filteredIngredientsList = globalIngredients.filter((i) =>
-		i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
-	);
+    let showIngredientModal = false;
+    let ingredientSearch = '';
+    
+    $: filteredIngredientsList = globalIngredients.filter((i) =>
+        i.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+    );
 
-	async function loadData() {
-		try {
-			recipes = await fetchRecipes(searchTerm);
-			
-			const result = await fetchIngredients(''); 
-			globalIngredients = Array.isArray(result) ? result : [];
-		} catch (e) {
-			console.error("Napaka pri nalaganju podatkov:", e);
-		}
-	}
+    async function loadData() {
+        try {
+            recipes = await fetchRecipes(searchTerm);
+            const result = await fetchIngredients(''); 
+            globalIngredients = Array.isArray(result) ? result : [];
+        } catch (e) {
+            console.error("Napaka pri nalaganju podatkov:", e);
+        }
+    }
 
-	onMount(loadData);
+    onMount(loadData);
 
-	$: if (searchTerm !== undefined) loadData();
+    $: if (searchTerm !== undefined) loadData();
 
-	function calculateNutrition(recipeIngredientsText: string) {
-		let totalKcal = 0;
+    // ... calculateNutrition and scaleIngredients functions remain the same ...
+    function calculateNutrition(recipeIngredientsText: string) {
+        // ... (keep existing code)
+        let totalKcal = 0;
 		if (!recipeIngredientsText) return { total: 0, percent: 0 };
-
 		const lines = recipeIngredientsText.split('\n');
-
 		for (const line of lines) {
 			const match = line.match(/(\d+)(?:g)?\s+(.*)/i) || [null, '100', line.trim()];
-			
-			const quantity = parseFloat(match[1] || '100'); // Če ni številke, privzemi 100g
+			const quantity = parseFloat(match[1] || '100'); 
 			const ingredientName = match[2]?.trim().toLowerCase();
-
 			if (ingredientName) {
 				const found = globalIngredients.find(i => i.name.toLowerCase() === ingredientName);
-				if (found) {
-					totalKcal += (quantity / 100) * found.calories;
-				}
+				if (found) { totalKcal += (quantity / 100) * found.calories; }
 			}
 		}
-		
-		return {
-			total: Math.round(totalKcal),
-			percent: Math.round((totalKcal / dailyTargetKcal) * 100)
-		};
-	}
+		return { total: Math.round(totalKcal), percent: Math.round((totalKcal / dailyTargetKcal) * 100) };
+    }
 
-	function scaleIngredients(text: string, multiplier: number): string {
-		if (!multiplier || multiplier === 1) return text;
+    function scaleIngredients(text: string, multiplier: number): string {
+         if (!multiplier || multiplier === 1) return text;
 		return text.replace(/\b\d+(\.\d+)?\b/g, (match) =>
 			(parseFloat(match) * multiplier).toString()
 		);
-	}
+    }
 
-	async function handleSubmit() {
-		const recipeData = { name, ingredients, instructions };
-		try {
-			if (editingRecipeId) {
-				await updateRecipe(editingRecipeId, recipeData);
-			} else {
-				await createRecipe(recipeData);
-			}
-			resetForm();
-			loadData();
-		} catch (e) {
-			console.error(e);
-			alert('Napaka pri shranjevanju.');
-		}
-	}
+    // NEW: Convert file to Base64
+    const convertBase64 = (file: File) => {
+        return new Promise<string>((resolve, reject) => {
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(file);
+            fileReader.onload = () => {
+                resolve(fileReader.result as string);
+            };
+            fileReader.onerror = (error) => {
+                reject(error);
+            };
+        });
+    };
 
-	function selectIngredient(itemName: string) {
-		const line = `100g ${itemName}`;
-		ingredients = ingredients ? `${ingredients}\n${line}` : line;
-		showIngredientModal = false;
-		ingredientSearch = '';
-	}
+    async function handleImageSelect(event: Event) {
+        const target = event.target as HTMLInputElement;
+        if (target.files && target.files[0]) {
+            const file = target.files[0];
+            imageBase64 = await convertBase64(file);
+        }
+    }
 
-	async function handleUpload() {
+    async function handleSubmit() {
+        // Updated payload
+        const recipeData: Recipe = { 
+            name, 
+            ingredients, 
+            instructions,
+            rating,
+            notes,
+            image: imageBase64
+        };
+
+        try {
+            if (editingRecipeId) {
+                await updateRecipe(editingRecipeId, recipeData);
+            } else {
+                await createRecipe(recipeData);
+            }
+            resetForm();
+            loadData();
+        } catch (e) {
+            console.error(e);
+            alert('Napaka pri shranjevanju.');
+        }
+    }
+
+    // ... selectIngredient, handleUpload, handleDelete remain the same ...
+    function selectIngredient(itemName: string) {
+        const line = `100g ${itemName}`;
+        ingredients = ingredients ? `${ingredients}\n${line}` : line;
+        showIngredientModal = false;
+        ingredientSearch = '';
+    }
+
+    async function handleUpload() {
 		const files = fileInput.getFiles();
 		for (const file of files) {
-			try {
-				await uploadMarkdown(file);
-			} catch (e) {
-				console.error(e);
-				alert('Napaka pri nalaganju');
-			}
+			try { await uploadMarkdown(file); } catch (e) { console.error(e); alert('Napaka pri nalaganju'); }
 		}
 		loadData();
 	}
 
-	async function handleDelete(id: number | undefined) {
+    async function handleDelete(id: number | undefined) {
 		if (!id || !confirm('Ali ste prepričani?')) return;
-		try {
-			await deleteRecipe(id);
-			loadData();
-		} catch (e) {
-			console.error(e);
-		}
+		try { await deleteRecipe(id); loadData(); } catch (e) { console.error(e); }
 	}
 
-	function handleEdit(recipe: Recipe) {
-		editingRecipeId = recipe.id!;
-		name = recipe.name;
-		ingredients = recipe.ingredients;
-		instructions = recipe.instructions;
-		window.scrollTo({ top: 0, behavior: 'smooth' });
-	}
+    function handleEdit(recipe: Recipe) {
+        editingRecipeId = recipe.id!;
+        name = recipe.name;
+        ingredients = recipe.ingredients;
+        instructions = recipe.instructions;
+        // Map new fields
+        rating = recipe.rating || 0;
+        notes = recipe.notes || '';
+        imageBase64 = recipe.image || '';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-	function resetForm() {
-		editingRecipeId = null;
-		name = '';
-		ingredients = '';
-		instructions = '';
-	}
+    function resetForm() {
+        editingRecipeId = null;
+        name = '';
+        ingredients = '';
+        instructions = '';
+        rating = 0;
+        notes = '';
+        imageBase64 = '';
+        if (imageInput) imageInput.value = ''; // Reset file input
+    }
 </script>
 
 <main>
-	<h1>Knjiga Receptov Yummerz</h1>
+    <h1>Knjiga Receptov Yummerz</h1>
 
-	<!-- Settings Bar za stranko -->
-	<div class="settings-bar">
-		<label>
-			🎯 Ciljni dnevni vnos (kcal):
-			<input type="number" bind:value={dailyTargetKcal} min="1000" step="100" style="width: 100px; display: inline-block; padding: 5px;">
-		</label>
-	</div>
+    <!-- Settings Bar za stranko -->
+    <div class="settings-bar">
+        <label>
+            🎯 Ciljni dnevni vnos (kcal):
+            <input type="number" bind:value={dailyTargetKcal} min="1000" step="100" style="width: 100px; display: inline-block; padding: 5px;">
+        </label>
+        
+        <!-- BONUS: Register/Login Link if using this page as main entry -->
+        <span style="margin-left: 20px;">
+            <a href="/login" class="button-link" style="margin:0">Odjava / Prijava</a>
+        </span>
+    </div>
 
-	<div class="form-container">
-		<h2>{editingRecipeId ? 'Uredi Recept' : 'Dodaj Nov Recept'}</h2>
+    <div class="form-container">
+        <h2>{editingRecipeId ? 'Uredi Recept' : 'Dodaj Nov Recept'}</h2>
 
-		<form on:submit|preventDefault={handleSubmit}>
-			<div class="form-group">
-				<label for="name">Ime recepta:</label>
-				<input id="name" type="text" bind:value={name} required />
-			</div>
-			<div class="form-group">
-				<label for="ingredients">Sestavine (format: "200g Moka"):</label>
-				<textarea id="ingredients" bind:value={ingredients} rows="4" placeholder="200g Moka&#10;150g Sladkor"></textarea>
-				<button type="button" class="secondary-outline" on:click={() => (showIngredientModal = true)}>
-					+ Izberi sestavino s seznama
-				</button>
-				<a href="/ingredients" class="button-link">Dodaj novo sestavino v shrambo</a>
-			</div>
-			<div class="form-group">
-				<label for="instructions">Navodila:</label>
-				<textarea id="instructions" bind:value={instructions} rows="6" required></textarea>
-			</div>
+        <form on:submit|preventDefault={handleSubmit}>
+            <!-- Image Upload -->
+            <div class="form-group">
+                <label for="img">Slika recepta:</label>
+                <input type="file" id="img" accept="image/*" on:change={handleImageSelect} bind:this={imageInput} />
+                {#if imageBase64}
+                    <img src={imageBase64} alt="Preview" style="max-height: 200px; margin-top: 10px; border-radius: 8px;" />
+                    <button type="button" class="secondary-outline" on:click={() => {imageBase64 = ''; imageInput.value = '';}}>Odstrani sliko</button>
+                {/if}
+            </div>
 
-			<div class="button-group">
-				<button type="submit" class="primary">
-					{editingRecipeId ? 'Shrani Spremembe' : 'Dodaj Recept'}
-				</button>
+            <div class="form-group">
+                <label for="name">Ime recepta:</label>
+                <input id="name" type="text" bind:value={name} required />
+            </div>
 
-				{#if editingRecipeId}
-					<button type="button" on:click={resetForm}>Prekliči</button>
-				{/if}
-			</div>
-		</form>
-		<br />
-		<FileUpload bind:this={fileInput} on:change={handleUpload}></FileUpload>
-	</div>
+            <!-- Rating -->
+            <div class="form-group">
+                <label for="rating">Ocena (1-5):</label>
+                <div class="rating-input">
+                    <input type="range" id="rating" min="0" max="5" step="1" bind:value={rating} />
+                    <span style="font-size: 1.2rem; font-weight: bold; margin-left: 10px;">{rating > 0 ? '⭐'.repeat(rating) : 'Brez ocene'}</span>
+                </div>
+            </div>
 
-	<hr />
+            <div class="form-group">
+                <label for="ingredients">Sestavine (format: "200g Moka"):</label>
+                <textarea id="ingredients" bind:value={ingredients} rows="4" placeholder="200g Moka&#10;150g Sladkor"></textarea>
+                <button type="button" class="secondary-outline" on:click={() => (showIngredientModal = true)}>
+                    + Izberi sestavino s seznama
+                </button>
+                <a href="/ingredients" class="button-link">Dodaj novo sestavino v shrambo</a>
+            </div>
 
-	<div class="recipes-list">
-		<h2>Vsi Recepti</h2>
+            <div class="form-group">
+                <label for="instructions">Navodila:</label>
+                <textarea id="instructions" bind:value={instructions} rows="6" required></textarea>
+            </div>
 
-		<div class="search-container">
-			<input
-				id="search"
-				type="text"
-				bind:value={searchTerm}
-				placeholder="Išči po imenu, sestavinah..."
-			/>
+            <!-- Notes -->
+            <div class="form-group">
+                <label for="notes">Moji zapiski (opombe):</label>
+                <textarea id="notes" bind:value={notes} rows="3" placeholder="Zapiski o peki, spremembe..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="primary">
+                    {editingRecipeId ? 'Shrani Spremembe' : 'Dodaj Recept'}
+                </button>
+
+                {#if editingRecipeId}
+                    <button type="button" on:click={resetForm}>Prekliči</button>
+                {/if}
+            </div>
+        </form>
+        <br />
+        <p style="font-size: 0.9rem; color: #666; text-align:center;">Uvozite recept iz Markdown datoteke:</p>
+        <FileUpload bind:this={fileInput} on:change={handleUpload}></FileUpload>
+    </div>
+
+    <hr />
+
+    <div class="recipes-list">
+        <h2>Vsi Recepti</h2>
+        <!-- Search container remains same -->
+        <div class="search-container">
+			<input id="search" type="text" bind:value={searchTerm} placeholder="Išči po imenu, sestavinah..." />
 			<div style="margin-top: 10px;">
 				<label>Skaliraj sestavine (x): <input type="number" min="0.5" step="0.5" bind:value={kolicina} style="width: 60px;" /></label>
 			</div>
 		</div>
 
-		{#if recipes.length === 0}
-			<p>Trenutno ni nobenih receptov.</p>
-		{:else}
-			{#each recipes as recipe (recipe.id)}
-				{@const nutrition = calculateNutrition(recipe.ingredients)}
-				<article class="recipe-card">
-					<div class="card-header-flex">
-						<h3>{recipe.name}</h3>
-						
-						<!-- NUTRITION BADGE (NOVO) -->
-						{#if nutrition.total > 0}
-							<div class="nutrition-badge" title="Delež dnevnega vnosa">
-								<span class="calories">🔥 {nutrition.total} kcal</span>
-								<span class="percent">({nutrition.percent}% dnevnega vnosa)</span>
-							</div>
-						{/if}
-					</div>
+        {#if recipes.length === 0}
+            <p>Trenutno ni nobenih receptov.</p>
+        {:else}
+            {#each recipes as recipe (recipe.id)}
+                {@const nutrition = calculateNutrition(recipe.ingredients)}
+                <article class="recipe-card">
+                    {#if recipe.image}
+                        <img src={recipe.image} alt={recipe.name} class="recipe-cover-image" />
+                    {/if}
 
-					<h4>Sestavine</h4>
-					<p>{scaleIngredients(recipe.ingredients, kolicina)}</p>
-					
-					<h4>Navodila</h4>
-					<p>{recipe.instructions}</p>
-					
-					<div class="recipe-actions">
-						<button on:click={() => handleEdit(recipe)}>Uredi</button>
-						<button class="danger" on:click={() => handleDelete(recipe.id)}>Izbriši</button>
-					</div>
-				</article>
-			{/each}
-		{/if}
-	</div>
+                    <div class="card-header-flex">
+                        <div>
+                            <h3>{recipe.name}</h3>
+                            {#if recipe.rating}
+                                <div class="rating-display">{'⭐'.repeat(recipe.rating)}</div>
+                            {/if}
+                        </div>
+                        
+                        {#if nutrition.total > 0}
+                            <div class="nutrition-badge" title="Delež dnevnega vnosa">
+                                <span class="calories">🔥 {nutrition.total} kcal</span>
+                                <span class="percent">({nutrition.percent}% dnevnega vnosa)</span>
+                            </div>
+                        {/if}
+                    </div>
 
-	{#if showIngredientModal}
-		<div class="modal-overlay" on:click|self={() => (showIngredientModal = false)}>
+                    <h4>Sestavine</h4>
+                    <p>{scaleIngredients(recipe.ingredients, kolicina)}</p>
+                    
+                    <h4>Navodila</h4>
+                    <p>{recipe.instructions}</p>
+                    
+                    {#if recipe.notes}
+                        <div class="recipe-notes">
+                            <strong>📝 Zapiski:</strong>
+                            <p>{recipe.notes}</p>
+                        </div>
+                    {/if}
+
+                    <div class="recipe-actions">
+                        <button on:click={() => handleEdit(recipe)}>Uredi</button>
+                        <button class="danger" on:click={() => handleDelete(recipe.id)}>Izbriši</button>
+                    </div>
+                </article>
+            {/each}
+        {/if}
+    </div>
+    
+    <!-- Ingredient Modal remains same -->
+    {#if showIngredientModal}
+        <!-- ... (modal code from original file) -->
+        <div class="modal-overlay" on:click|self={() => (showIngredientModal = false)}>
 			<div class="modal-content">
 				<h3>Izberi sestavino</h3>
-				<input
-					type="text"
-					placeholder="Išči sestavine..."
-					bind:value={ingredientSearch}
-					autofocus
-				/>
+				<input type="text" placeholder="Išči sestavine..." bind:value={ingredientSearch} autofocus />
 				<ul class="ingredient-select-list">
 					{#each filteredIngredientsList as item}
 						<li>
@@ -266,16 +336,15 @@
 						<li>Ni zadetkov. <a href="/ingredients">Dodaj novo?</a></li>
 					{/if}
 				</ul>
-				<button type="button" class="close-btn" on:click={() => (showIngredientModal = false)}>
-					Zapri
-				</button>
+				<button type="button" class="close-btn" on:click={() => (showIngredientModal = false)}>Zapri</button>
 			</div>
 		</div>
-	{/if}
+    {/if}
 </main>
 
 <style>
-	:root {
+    /* ... Keep existing styles ... */
+    :root {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 		--primary-color: #4caf50;
 		--danger-color: #f44336;
@@ -359,6 +428,7 @@
 		padding: 1.5rem;
 		margin-bottom: 1rem;
 		position: relative;
+        overflow: hidden;
 	}
 	
 	.card-header-flex {
@@ -406,4 +476,26 @@
 	}
 	.ingredient-select-list li button:hover { background: #f0f0f0; }
 	.close-btn { width: 100%; background: #ccc; margin-top: 1rem; }
+
+    /* NEW STYLES */
+    .recipe-cover-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .rating-display {
+        font-size: 1.2rem;
+        margin-top: 0.2rem;
+    }
+
+    .recipe-notes {
+        background-color: #fff9c4;
+        padding: 10px;
+        border-left: 4px solid #fbc02d;
+        margin: 10px 0;
+        border-radius: 4px;
+    }
 </style>

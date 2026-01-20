@@ -31,7 +31,7 @@ public class RecipeService {
     }
 
     public Recipe createRecipe(Recipe recipe) {
-        recipe.setOwner(getCurrentUsername()); // Tag the recipe with the owner
+        recipe.setOwner(getCurrentUsername()); 
         return recipeRepository.save(recipe);
     }
     public Optional<Recipe> getRecipeById(Long id) {
@@ -40,14 +40,20 @@ public class RecipeService {
 
     public Optional<Recipe> updateRecipe(Long id, Recipe details) {
         return recipeRepository.findById(id)
-                .filter(r -> r.getOwner().equals(getCurrentUsername())) // SECURITY CHECK
+                .filter(r -> r.getOwner().equals(getCurrentUsername()))
                 .map(existing -> {
                     existing.setName(details.getName());
                     existing.setIngredients(details.getIngredients());
                     existing.setInstructions(details.getInstructions());
+                    
+                    existing.setImage(details.getImage());
+                    existing.setRating(details.getRating());
+                    existing.setNotes(details.getNotes());
+                    
                     return recipeRepository.save(existing);
                 });
     }
+
     public boolean deleteRecipe(Long id) {
         if (recipeRepository.existsById(id)) {
             recipeRepository.deleteById(id);
